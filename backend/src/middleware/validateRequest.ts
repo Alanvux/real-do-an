@@ -1,11 +1,12 @@
-// src/middleware/validateRequest.js
-const { validationResult } = require('express-validator');
+// src/middleware/validateRequest.ts
+import { Request, Response, NextFunction } from 'express';
+import { validationResult } from 'express-validator';
 
 /**
  * Middleware to validate request using express-validator
  * Checks if there are validation errors and returns them
  */
-const validateRequest = (req, res, next) => {
+const validateRequest = (req: Request, res: Response, next: NextFunction): void | Response => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({
@@ -20,4 +21,4 @@ const validateRequest = (req, res, next) => {
   next();
 };
 
-module.exports = validateRequest;
+export default validateRequest;

@@ -1,6 +1,6 @@
-// src/utils/logger.js
-const winston = require('winston');
-const config = require('../config');
+// src/utils/logger.ts
+import winston from 'winston';
+import config from '../config';
 
 // Define log format
 const logFormat = winston.format.combine(
@@ -55,4 +55,4 @@ const logger = winston.createLogger({
   ],
 });
 
-module.exports = logger;
+export default logger;

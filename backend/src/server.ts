@@ -1,7 +1,7 @@
-    // src/server.js
-const app = require('./app');
-const config = require('./config');
-const logger = require('./utils/logger');
+// src/server.ts
+import app from './app';
+import config from './config';
+import logger from './utils/logger';
 
 // Start the server
 const server = app.listen(config.port, () => {
@@ -10,7 +10,7 @@ const server = app.listen(config.port, () => {
 });
 
 // Handle unhandled rejections
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', (err: Error) => {
   logger.error('UNHANDLED REJECTION! Shutting down...');
   logger.error(err.name, err.message);
   
@@ -21,7 +21,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (err: Error) => {
   logger.error('UNCAUGHT EXCEPTION! Shutting down...');
   logger.error(err.name, err.message);
   

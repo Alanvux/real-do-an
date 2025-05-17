@@ -1,9 +1,9 @@
-// src/routes/aiRoutes.js
-const express = require('express');
-const { body, query } = require('express-validator');
-const aiController = require('../controllers/aiController');
-const { protect, restrictTo } = require('../middleware/authMiddleware');
-const validateRequest = require('../middleware/validateRequest');
+// src/routes/aiRoutes.ts
+import express from 'express';
+import { body, query } from 'express-validator';
+import aiController from '../controllers/aiController';
+import { protect, restrictTo } from '../middleware/authMiddleware';
+import validateRequest from '../middleware/validateRequest';
 
 const router = express.Router();
 
@@ -85,4 +85,4 @@ router.get(
   aiController.getChatHistory
 );
 
-module.exports = router;
+export default router;

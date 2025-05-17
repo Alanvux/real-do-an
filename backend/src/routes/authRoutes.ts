@@ -1,9 +1,9 @@
-// src/routes/authRoutes.js
-const express = require('express');
-const { body } = require('express-validator');
-const authController = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
-const validateRequest = require('../middleware/validateRequest');
+// src/routes/authRoutes.ts
+import express from 'express';
+import { body } from 'express-validator';
+import authController from '../controllers/authController';
+import { protect } from '../middleware/authMiddleware';
+import validateRequest from '../middleware/validateRequest';
 
 const router = express.Router();
 
@@ -91,4 +91,4 @@ router.patch(
   authController.changePassword
 );
 
-module.exports = router;
+export default router;

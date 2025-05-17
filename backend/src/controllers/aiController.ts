@@ -1,24 +1,65 @@
-// src/controllers/aiController.js
-const db = require('../db');
-const { generateChatResponse, extractKeyConcepts, generateQuizQuestions, generateAssignmentFeedback } = require('../services/openaiService');
-const AppError = require('../utils/appError');
-const logger = require('../utils/logger');
+// src/controllers/aiController.ts
+import { Request, Response, NextFunction } from 'express';
+import db from '../db';
+import { 
+  generateChatResponse, 
+  extractKeyConcepts, 
+  generateQuizQuestions, 
+  generateAssignmentFeedback 
+} from '../services/openaiService';
+import AppError from '../utils/appError';
+import logger from '../utils/logger';
+
+interface AIChatRequest extends Request {
+  body: {
+    query: string;
+    courseId?: string;
+  };
+}
+
+interface QuizRequest extends Request {
+  body: {
+    lectureId: string;
+    numQuestions?: number;
+  };
+}
+
+interface ConceptRequest extends Request {
+  body: {
+    lectureId: string;
+  };
+}
+
+interface FeedbackRequest extends Request {
+  body: {
+    submissionId: string;
+  };
+}
+
+interface ChatHistoryQuery {
+  limit?: string;
+  offset?: string;
+}
 
 /**
  * AI chat interaction
  * @route POST /api/ai/chat
  */
-const chatWithAI = async (req, res, next) => {
+export const chatWithAI = async (req: AIChatRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { query, courseId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('Authentication required', 401));
+    }
 
     if (!query) {
       return next(new AppError('Query is required', 400));
     }
 
     // Get relevant course materials for context if courseId is provided
-    let context = [];
+    let context: string[] = [];
     if (courseId) {
       // Check if user is enrolled in the course
       const enrollmentResult = await db.query(
@@ -61,7 +102,8 @@ const chatWithAI = async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('AI chat error:', error);
+    const err = error as Error;
+    logger.error('AI chat error:', err);
     next(new AppError('Failed to process AI chat request', 500));
   }
 };
@@ -70,13 +112,17 @@ const chatWithAI = async (req, res, next) => {
  * Generate quiz questions for a lecture
  * @route POST /api/ai/generate-quiz
  */
-const generateQuiz = async (req, res, next) => {
+export const generateQuiz = async (req: QuizRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { lectureId, numQuestions = 5 } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('Authentication required', 401));
+    }
 
     // Only teachers and admins can generate quizzes
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+    if (req.user?.role !== 'teacher' && req.user?.role !== 'admin') {
       return next(new AppError('You do not have permission to generate quizzes', 403));
     }
 
@@ -93,7 +139,7 @@ const generateQuiz = async (req, res, next) => {
     const lecture = lectureResult.rows[0];
 
     // Check if user is the teacher of the course or an admin
-    if (req.user.role === 'teacher' && lecture.teacher_id !== userId) {
+    if (req.user?.role === 'teacher' && lecture.teacher_id !== userId) {
       return next(new AppError('You do not have permission to generate quizzes for this course', 403));
     }
 
@@ -110,7 +156,8 @@ const generateQuiz = async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('Generate quiz error:', error);
+    const err = error as Error;
+    logger.error('Generate quiz error:', err);
     next(new AppError('Failed to generate quiz questions', 500));
   }
 };
@@ -119,10 +166,14 @@ const generateQuiz = async (req, res, next) => {
  * Extract key concepts from a lecture
  * @route POST /api/ai/extract-concepts
  */
-const extractConcepts = async (req, res, next) => {
+export const extractConcepts = async (req: ConceptRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { lectureId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('Authentication required', 401));
+    }
 
     // Get lecture content
     const lectureResult = await db.query(
@@ -137,7 +188,7 @@ const extractConcepts = async (req, res, next) => {
     const lecture = lectureResult.rows[0];
 
     // Check if user is enrolled in the course, is the teacher, or an admin
-    if (req.user.role === 'student') {
+    if (req.user?.role === 'student') {
       const enrollmentResult = await db.query(
         'SELECT * FROM enrollments WHERE user_id = $1 AND course_id = $2',
         [userId, lecture.course_id]
@@ -146,7 +197,7 @@ const extractConcepts = async (req, res, next) => {
       if (enrollmentResult.rows.length === 0) {
         return next(new AppError('You are not enrolled in this course', 403));
       }
-    } else if (req.user.role === 'teacher' && lecture.teacher_id !== userId) {
+    } else if (req.user?.role === 'teacher' && lecture.teacher_id !== userId) {
       return next(new AppError('You do not have permission to access this lecture', 403));
     }
 
@@ -163,7 +214,8 @@ const extractConcepts = async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('Extract concepts error:', error);
+    const err = error as Error;
+    logger.error('Extract concepts error:', err);
     next(new AppError('Failed to extract key concepts', 500));
   }
 };
@@ -172,13 +224,17 @@ const extractConcepts = async (req, res, next) => {
  * Generate feedback for assignment submission
  * @route POST /api/ai/generate-feedback
  */
-const generateFeedback = async (req, res, next) => {
+export const generateFeedback = async (req: FeedbackRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { submissionId } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('Authentication required', 401));
+    }
 
     // Only teachers and admins can generate feedback
-    if (req.user.role !== 'teacher' && req.user.role !== 'admin') {
+    if (req.user?.role !== 'teacher' && req.user?.role !== 'admin') {
       return next(new AppError('You do not have permission to generate feedback', 403));
     }
 
@@ -200,7 +256,7 @@ const generateFeedback = async (req, res, next) => {
     const submission = submissionResult.rows[0];
 
     // Check if user is the teacher of the course or an admin
-    if (req.user.role === 'teacher' && submission.teacher_id !== userId) {
+    if (req.user?.role === 'teacher' && submission.teacher_id !== userId) {
       return next(new AppError('You do not have permission to generate feedback for this submission', 403));
     }
 
@@ -217,7 +273,8 @@ const generateFeedback = async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('Generate feedback error:', error);
+    const err = error as Error;
+    logger.error('Generate feedback error:', err);
     next(new AppError('Failed to generate feedback', 500));
   }
 };
@@ -226,15 +283,20 @@ const generateFeedback = async (req, res, next) => {
  * Get chat history for a user
  * @route GET /api/ai/chat-history
  */
-const getChatHistory = async (req, res, next) => {
+export const getChatHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = req.user.id;
-    const { limit = 20, offset = 0 } = req.query;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return next(new AppError('Authentication required', 401));
+    }
+
+    const { limit = '20', offset = '0' } = req.query as ChatHistoryQuery;
 
     // Get chat history
     const result = await db.query(
       'SELECT * FROM ai_chat_history WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-      [userId, limit, offset]
+      [userId, parseInt(limit), parseInt(offset)]
     );
 
     res.status(200).json({
@@ -249,7 +311,7 @@ const getChatHistory = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export default {
   chatWithAI,
   generateQuiz,
   extractConcepts,

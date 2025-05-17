@@ -1,24 +1,24 @@
-// src/app.js
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const { errorHandler, notFound } = require('./middleware/errorMiddleware');
-const config = require('./config');
+// src/app.ts
+import express, { Request, Response, Application } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { errorHandler, notFound } from './middleware/errorMiddleware';
+import config from './config';
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
-const courseRoutes = require('./routes/courseRoutes');
-const lectureRoutes = require('./routes/lectureRoutes');
-const enrollmentRoutes = require('./routes/enrollmentRoutes');
-const assignmentRoutes = require('./routes/assignmentRoutes');
-const messageRoutes = require('./routes/messageRoutes');
-const aiRoutes = require('./routes/aiRoutes');
-const categoryRoutes = require('./routes/categoryRoutes');
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
+import courseRoutes from './routes/courseRoutes';
+import lectureRoutes from './routes/lectureRoutes';
+import enrollmentRoutes from './routes/enrollmentRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
+import messageRoutes from './routes/messageRoutes';
+import aiRoutes from './routes/aiRoutes';
+import categoryRoutes from './routes/categoryRoutes';
 
 // Initialize Express app
-const app = express();
+const app: Application = express();
 
 // Global middleware
 app.use(helmet()); // Set security HTTP headers
@@ -39,7 +39,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/categories', categoryRoutes);
 
 // Simple health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
     message: 'API is running',
@@ -49,7 +49,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // API documentation
-app.get('/api', (req, res) => {
+app.get('/api', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'success',
     message: 'Welcome to E-Learning API',
@@ -62,4 +62,4 @@ app.get('/api', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

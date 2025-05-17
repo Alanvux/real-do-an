@@ -1,4 +1,4 @@
-# Backend Dockerfile
+# Backend Dockerfile for TypeScript
 FROM node:18-alpine
 
 WORKDIR /app
@@ -13,8 +13,11 @@ COPY . .
 # Create an .env file if it doesn't exist
 RUN if [ ! -f .env ]; then touch .env; fi
 
+# Build TypeScript project
+RUN npm run build
+
 # Expose the port the app will run on
 EXPOSE 4000
 
-# Command to run the application
+# Command to run the application in development mode (with hot reloading)
 CMD ["npm", "run", "dev"]
